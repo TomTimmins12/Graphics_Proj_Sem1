@@ -1,0 +1,44 @@
+﻿  Application.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(93,54): warning C4244: 'argument': conversion from 'UINT' to 'FLOAT', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(93,40): warning C4244: 'argument': conversion from 'UINT' to 'FLOAT', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(102,61): warning C4244: 'argument': conversion from 'UINT' to 'FLOAT', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(102,47): warning C4244: 'argument': conversion from 'UINT' to 'FLOAT', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(440,13): warning C4189: 'hr': local variable is initialized but not referenced
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(688,25): warning C4244: 'initializing': conversion from 'ULONGLONG' to 'DWORD', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(794,46): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(796,51): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(798,87): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Application.cpp(695,9): warning C4101: 'vKey': unreferenced local variable
+  Camera.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Camera.cpp(47,84): warning C4100: 'farDepth': unreferenced formal parameter
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Camera.cpp(47,67): warning C4100: 'nearDepth': unreferenced formal parameter
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Camera.cpp(47,47): warning C4100: 'windowHeight': unreferenced formal parameter
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Camera.cpp(47,28): warning C4100: 'windowWidth': unreferenced formal parameter
+  CubeClass.cpp
+  DDSTextureLoader.cpp
+  DX11 Framework.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+  Input.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Input.cpp(58,8): warning C4189: 'speed': local variable is initialized but not referenced
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Input.cpp(99,36): warning C4100: 'time': unreferenced formal parameter
+  Matrix.cpp
+  ObjectClass.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\ObjectClass.cpp(14,44): warning C4100: 'device': unreferenced formal parameter
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\ObjectClass.cpp(23,47): warning C4100: 'deviceContext': unreferenced formal parameter
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\ObjectClass.cpp(32,51): warning C4100: 'device': unreferenced formal parameter
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\ObjectClass.cpp(41,54): warning C4100: 'deviceContext': unreferenced formal parameter
+  OBJLoader.cpp
+  Terrainclass.cpp
+  Vector3D.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Vector3D.cpp(119,50): warning C4239: nonstandard extension used: 'return': conversion from 'Vector3D' to 'Vector3D &'
+C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Vector3D.cpp(119,50): message : A non-const reference may only be bound to an lvalue
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 226 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  DX11 Framework.vcxproj -> C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Release\DX11 Framework.exe
