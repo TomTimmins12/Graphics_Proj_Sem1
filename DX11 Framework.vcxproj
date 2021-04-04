@@ -92,7 +92,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
-    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <ExecutablePath>C:\Users\thoma\Documents\GitHub\Graphics_Proj_Sem1\Graphics_Proj_Sem1\Assets;$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -373,42 +373,50 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup />
   <ItemGroup>
+    <ClCompile Include="Appearance.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CubeClass.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DX11 Framework.cpp" />
-    <ClCompile Include="Input.cpp" />
     <ClCompile Include="Matrix.cpp" />
-    <ClCompile Include="ObjectClass.cpp" />
+    <ClCompile Include="GameObj.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="Terrainclass.cpp" />
+    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Vector3D.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram.cd" />
     <None Include="DX11 Framework.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Appearance.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CubeClass.h" />
     <ClInclude Include="DDSTextureLoader.h" />
-    <ClInclude Include="Input.h" />
     <ClInclude Include="Structures.h" />
     <ClInclude Include="Includes.h" />
     <ClInclude Include="Matrix.h" />
-    <ClInclude Include="ObjectClass.h" />
+    <ClInclude Include="GameObj.h" />
     <ClInclude Include="OBJLoader.h" />
     <CLInclude Include="resource.h" />
     <ClInclude Include="Terrainclass.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="Vector3D.h" />
     <ResourceCompile Include="DX11 Framework.rc" />
   </ItemGroup>
   <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
+    <Image Include="Assets\Textures\asphalt.dds" />
+    <Image Include="Assets\Textures\asphalt_DISP.dds" />
+    <Image Include="Assets\Textures\asphalt_NORMAL.dds" />
+    <Image Include="Assets\Textures\asphalt_SPEC.dds" />
+    <Image Include="Assets\Textures\ChainLink.dds" />
+    <Image Include="Assets\Textures\Crate_COLOR.dds" />
+    <Image Include="Assets\Textures\Crate_NRM.dds" />
+    <Image Include="Assets\Textures\Crate_SPEC.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

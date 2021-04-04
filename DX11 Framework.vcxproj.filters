@@ -15,6 +15,9 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{3290e93d-8f73-4821-9b5f-811409e7fb51}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Textures">
+      <UniqueIdentifier>{6824f1c8-c729-44e7-95ce-f4abb6699d00}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -32,9 +35,6 @@
     <ClInclude Include="Matrix.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectClass.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="Terrainclass.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -47,10 +47,16 @@
     <ClInclude Include="Structures.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h">
+    <ClInclude Include="Camera.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="GameObj.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Appearance.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
@@ -70,9 +76,6 @@
     <ClCompile Include="Matrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Terrainclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -82,10 +85,16 @@
     <ClCompile Include="OBJLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
+    <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="GameObj.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Appearance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -98,10 +107,37 @@
     <None Include="DX11 Framework.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DX11 Framework.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Textures\asphalt.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\asphalt_DISP.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\asphalt_NORMAL.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\asphalt_SPEC.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\ChainLink.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\Crate_COLOR.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\Crate_NRM.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\Crate_SPEC.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

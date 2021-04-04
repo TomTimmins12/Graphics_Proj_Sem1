@@ -1,11 +1,33 @@
 #pragma once
 #include "Includes.h"
 
+struct MeshData
+{
+	ID3D11Buffer * VertexBuffer;
+	ID3D11Buffer * IndexBuffer;
+	UINT VBStride;
+	UINT VBOffset;
+	UINT IndexCount;
+};
+
 struct SimpleVertex
 {
-    XMFLOAT3 Pos;
-    XMFLOAT3 Normal;
-    XMFLOAT2 TexC;
+	XMFLOAT3 Pos;
+	XMFLOAT3 Normal;
+	XMFLOAT2 TexC;
+
+	bool operator<(const SimpleVertex other) const
+	{
+		return memcmp((void*)this, (void*)&other, sizeof(SimpleVertex)) > 0;
+	};
+};
+
+
+struct SurfaceInfo
+{
+	XMFLOAT4 AmbientMtrl;
+	XMFLOAT4 DiffuseMtrl;
+	XMFLOAT4 SpecularMtrl;
 };
 
 
@@ -13,12 +35,13 @@ struct DirectionalLight
 {
 	DirectionalLight() { ZeroMemory(this, sizeof(this)); }
 
-	XMFLOAT4 Ambient;
-	XMFLOAT4 Diffuse;
-	XMFLOAT4 Specular;
+	XMFLOAT4 AmbientLight;
+	XMFLOAT4 DiffuseLight;
+	XMFLOAT4 SpecularLight;
+
+	FLOAT SpecularPower;
 	XMFLOAT3 Direction;
-	float pad; // Pad the last float so we can set an
-	// array of lights if we wanted.
+
 };
 
 struct PointLight

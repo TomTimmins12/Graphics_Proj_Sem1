@@ -19,8 +19,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     {
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            bool handled = false;
+
+            if (msg.message >= WM_KEYFIRST && msg.message <= WM_KEYLAST)
+            {
+                handled = theApp->HandleKeyboard(msg);
+            }
+            else if (WM_QUIT == msg.message)
+                break;
+            if (!handled) {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
         }
         else
         {

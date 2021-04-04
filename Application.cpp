@@ -24,6 +24,53 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 
+bool Application::HandleKeyboard(MSG msg)
+{
+    XMFLOAT3 cameraPosition = m_camera->GetPosition();
+
+    switch (msg.wParam)
+    {
+    case VK_UP:
+        _cameraOrbitRadius = max(_cameraOrbitRadiusMin, _cameraOrbitRadius - (_cameraSpeed * 0.2f));
+        return true;
+        break;
+
+    case VK_DOWN:
+        _cameraOrbitRadius = min(_cameraOrbitRadiusMax, _cameraOrbitRadius + (_cameraSpeed * 0.2f));
+        return true;
+        break;
+
+    case VK_RIGHT:
+        _cameraOrbitAngleXZ -= _cameraSpeed;
+        return true;
+        break;
+
+    case VK_LEFT:
+        _cameraOrbitAngleXZ += _cameraSpeed;
+        return true;
+        break;
+
+    case 'q':
+            if (_wireFrameState)
+            {
+                _pImmediateContext->RSSetState(false);
+                _wireFrameState = false;
+            }
+            else {
+                _pImmediateContext->RSSetState(_wireFrame);
+                _wireFrameState = true;
+            }
+        
+        return true;
+        break;
+    }
+
+        
+
+    return false;
+}
+
+
 Application::Application()
 {
     _hInst = nullptr;
@@ -40,9 +87,8 @@ Application::Application()
 	_pVertexBufferCube = nullptr;
 	_pIndexBufferCube = nullptr;
 	_pConstantBuffer = nullptr;
-
-    _depthStencilView = nullptr;
-    _depthStencilBuffer = nullptr;
+    _WindowHeight = 0;
+    _WindowWidth = 0;
 
     _wireFrame = nullptr;
     _wireFrameState = false;
@@ -50,7 +96,7 @@ Application::Application()
     _pVertexBufferPyramid = nullptr;
     _pIndexBufferPyramid = nullptr;
     m_camera = nullptr;
-    _pInputHandler = nullptr;
+
 }
 
 Application::~Application()
@@ -78,28 +124,60 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
         return E_FAIL;
     }
 
-	// Initialize the world matrix
-	XMStoreFloat4x4(&_world, XMMatrixIdentity());
-
-    // Initialize Input handler
-    _pInputHandler = new Input(_hWnd);
-    _pInputHandler->InitInput(hInstance);
+    CreateDDSTextureFromFile(_pd3dDevice, L"Assets\\Textures\\Crate_COLOR.dds", nullptr, &_pTextureRV);
 
     //Init Camera Values 
-    XMFLOAT3 Eye = XMFLOAT3(0.0f, 10.0f, 0.0f);
-    XMFLOAT3 At = XMFLOAT3(0.0f, -10.0f, 0.0f);
-    XMFLOAT3 Up = XMFLOAT3(0.0f, 0.0f, -1.0f);
+    XMFLOAT3 eye = XMFLOAT3(0.0f, 2.0f, -1.0f);
+    XMFLOAT3 at = XMFLOAT3(0.0f, 2.0f, 2.0f);
+    XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
 
-    m_camera = new Camera(Eye, At, Up, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
-    // Initialize _view as default camera
-    _view = m_camera->GetViewMatrix();
-    _projection = m_camera->GetProjectionMatrix();
+    m_camera = new Camera(eye, at, up, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
 
-    Eye = XMFLOAT3(0.0f, 0.0f, -10.0f);
-    At = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    Up = XMFLOAT3(10.0f, 0.0f, 0.0f);
-    
-    m_topDownCamera = new Camera(Eye, At, Up, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+    //eye = XMFLOAT3(0.0f, 0.0f, -10.0f);
+    //at = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    //up = XMFLOAT3(10.0f, 0.0f, 0.0f);
+
+    //m_topDownCamera = new Camera(eye, at, up, _WindowWidth, _WindowHeight, 0.01f, 100.0f);
+
+    // Init Lighting and load object data
+    m_dirLight.AmbientLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+    m_dirLight.DiffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    m_dirLight.SpecularLight = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+    m_dirLight.SpecularPower = 20.0f;
+    m_dirLight.Direction = XMFLOAT3(0.0f, 1.0f, -1.0f);
+
+    // Use object loading for a cube
+    Geometry cubeGeometry;
+    objMeshData = OBJLoader::Load("Assets\\Objects\\3ds_cube.obj", _pd3dDevice);
+    cubeGeometry.indexBuffer = objMeshData.IndexBuffer;
+    cubeGeometry.numberOfIndices = objMeshData.IndexCount;
+    cubeGeometry.vertexBuffer = objMeshData.VertexBuffer;
+    cubeGeometry.vertexBufferOffset = objMeshData.VBOffset;
+    cubeGeometry.vertexBufferStride = objMeshData.VBStride;
+
+    Material shinyMaterial;
+    shinyMaterial.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+    shinyMaterial.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    shinyMaterial.specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+    shinyMaterial.specularPower = 10.0f;
+
+    Material noSpecMaterial;
+    noSpecMaterial.ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+    noSpecMaterial.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    noSpecMaterial.specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+    noSpecMaterial.specularPower = 0.0f;
+
+    // Object init
+    _appearance = new Appearance();
+    _transform = new Transform();
+    _transform->SetPosition(0.0f, 0.0f, 0.0f);
+    _transform->SetScale(1.0f, 1.0f, 1.0f);
+    _appearance->Init(cubeGeometry, shinyMaterial);
+    _appearance->SetTextureRV(_pTextureRV);
+
+    GameObj * gameObject = new GameObj("Cube", _appearance, _transform);
+
+    _gameObjects.push_back(gameObject);
 
 	//XMStoreFloat4x4(&_view, XMMatrixLookAtLH(Eye, At, Up));
 
@@ -158,7 +236,6 @@ HRESULT Application::InitShadersAndInputLayout()
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        //{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	UINT numElements = ARRAYSIZE(layout);
@@ -295,18 +372,23 @@ HRESULT Application::InitIndexBuffer()
     // Create index buffer
     WORD CubeIndices[] =
     {
-        0, 1, 2, //Side 1
+        3, 1, 0,
         2, 1, 3,
-        4, 0, 6, //Side 2
-        6, 0, 2,
-        7, 5, 6, //Side 3
-        6, 5, 4,
-        3, 1, 7, //Side 4
-        7, 1, 5,
-        4, 5, 0, //Side 5
-        0, 5, 1,
-        3, 7, 2, //Side 6
-        2, 7, 6
+
+        6, 4, 5,
+        7, 4, 6,
+
+        11, 9, 8,
+        10, 9, 11,
+
+        14, 12, 13,
+        15, 12, 14,
+
+        19, 17, 16,
+        18, 17, 19,
+
+        22, 20, 21,
+        23, 20, 22
     };
     size_t indCount = sizeof(CubeIndices) / sizeof(CubeIndices[0]);
     CubeIndCount = indCount;
@@ -388,7 +470,7 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
 
     // Create window
     _hInst = hInstance;
-    RECT rc = {0, 0, 640, 480};
+    RECT rc = {0, 0, 960, 540};
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
     _hWnd = CreateWindow(L"TutorialWindowClass", L"DX11 Framework", WS_OVERLAPPEDWINDOW,
                          CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
@@ -435,71 +517,6 @@ HRESULT Application::CompileShaderFromFile(WCHAR* szFileName, LPCSTR szEntryPoin
 }
 
 
-HRESULT Application::InitDepthStencilView()
-{
-    HRESULT hr = S_OK;
-
-    // Set up the dpeth/stencil buffer
-    D3D11_TEXTURE2D_DESC depthStencilDesc;
-
-    depthStencilDesc.Width = _WindowWidth;
-    depthStencilDesc.Height = _WindowHeight;
-    depthStencilDesc.MipLevels = 1;
-    depthStencilDesc.ArraySize = 1;
-    depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthStencilDesc.SampleDesc.Count = 1;
-    depthStencilDesc.SampleDesc.Quality = 0;
-    depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-    depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    depthStencilDesc.CPUAccessFlags = 0;
-    depthStencilDesc.MiscFlags = 0;
-
-    //D3D11_DEPTH_STENCIL_DESC dsDesc;
-
-    //// Depth test parameters
-    //dsDesc.DepthEnable = true;
-    //dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-    //dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-    //// Stencil test parameters
-    //dsDesc.StencilEnable = true;
-    //dsDesc.StencilReadMask = 0xFF;
-    //dsDesc.StencilWriteMask = 0xFF;
-
-    //// Stencil operations if pixel is front-facing
-    //dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-    //dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-    //dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-    //dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-    //// Stencil operations if pixel is back-facing
-    //dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-    //dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-    //dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-    //dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-    //// Create depth stencil state
-    //ID3D11DepthStencilState* pDSState;
-    //hr = _pd3dDevice->CreateDepthStencilState(&dsDesc, &pDSState);
-    //if (FAILED(hr))
-    //    return hr;
-
-    //D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
-    //descDSV.Format = depthStencilDesc.Format;
-    //descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-    //descDSV.Texture2D.MipSlice = 0;
-
-    // Initialise depth/stencil buffers
-    _pd3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, &_depthStencilBuffer);
-
-    _pd3dDevice->CreateDepthStencilView(_depthStencilBuffer, nullptr, &_depthStencilView);
-
-    _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _depthStencilView);
-
-    return S_OK;
-}
-
-
 HRESULT Application::InitDevice()
 {
     HRESULT hr = S_OK;
@@ -528,6 +545,8 @@ HRESULT Application::InitDevice()
 
 	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
 
+    UINT sampleCount = 4;
+
     DXGI_SWAP_CHAIN_DESC sd;
     ZeroMemory(&sd, sizeof(sd));
     sd.BufferCount = 1;
@@ -538,7 +557,7 @@ HRESULT Application::InitDevice()
     sd.BufferDesc.RefreshRate.Denominator = 1;
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sd.OutputWindow = _hWnd;
-    sd.SampleDesc.Count = 1;
+    sd.SampleDesc.Count = sampleCount;
     sd.SampleDesc.Quality = 0;
     sd.Windowed = TRUE;
 
@@ -567,7 +586,6 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
         return hr;
 
-
     // Setup the viewport
     D3D11_VIEWPORT vp;
     vp.Width = (FLOAT)_WindowWidth;
@@ -581,10 +599,7 @@ HRESULT Application::InitDevice()
 	InitShadersAndInputLayout();
 
 	InitVertexBuffer();
-
 	InitIndexBuffer();
-
-    InitDepthStencilView();
 
     // Set primitive topology
     _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -598,7 +613,8 @@ HRESULT Application::InitDevice()
 	bd.CPUAccessFlags = 0;
     hr = _pd3dDevice->CreateBuffer(&bd, nullptr, &_pConstantBuffer);
 
-
+    if (FAILED(hr))
+        return hr;
 
     // Fill out the wireframe rendering struct and initialise
     D3D11_RASTERIZER_DESC wfdesc;
@@ -607,25 +623,52 @@ HRESULT Application::InitDevice()
     wfdesc.CullMode = D3D11_CULL_NONE;
     hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_wireFrame);
 
-    if (FAILED(hr))
-        return hr;
+    D3D11_TEXTURE2D_DESC depthStencilDesc;
+
+    depthStencilDesc.Width = _renderWidth;
+    depthStencilDesc.Height = _renderHeight;
+    depthStencilDesc.MipLevels = 1;
+    depthStencilDesc.ArraySize = 1;
+    depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    depthStencilDesc.SampleDesc.Count = sampleCount;
+    depthStencilDesc.SampleDesc.Quality = 0;
+    depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+    depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    depthStencilDesc.CPUAccessFlags = 0;
+    depthStencilDesc.MiscFlags = 0;
+
+    _pd3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, &_depthStencilBuffer);
+    _pd3dDevice->CreateDepthStencilView(_depthStencilBuffer, nullptr, &_depthStencilView);
+
+    _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _depthStencilView);
 
 
-    D3D11_TEXTURE2D_DESC desc;
-    desc.Width = 256;
-    desc.Height = 256;
-    desc.MipLevels = desc.ArraySize = 1;
-    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    desc.SampleDesc.Count = 1;
-    desc.Usage = D3D11_USAGE_DYNAMIC;
-    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    desc.MiscFlags = 0;
-    _pd3dDevice->CreateTexture2D(&desc, nullptr, &_pcubeTex);
-    _pd3dDevice->CreateShaderResourceView(_pcubeTex, nullptr, &_pTextureRV);
-    CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR.dds", nullptr, &_pTextureRV); ///////////////////////////////
-    // Set Texture to PS
-    _pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
+    // Rasterizer
+    D3D11_RASTERIZER_DESC cmdesc;
+
+    ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+    cmdesc.FillMode = D3D11_FILL_SOLID;
+    cmdesc.CullMode = D3D11_CULL_NONE;
+    hr = _pd3dDevice->CreateRasterizerState(&cmdesc, &RSCullNone);
+
+    D3D11_DEPTH_STENCIL_DESC dssDesc;
+    ZeroMemory(&dssDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+    dssDesc.DepthEnable = true;
+    dssDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    dssDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+    _pd3dDevice->CreateDepthStencilState(&dssDesc, &DSLessEqual);
+
+    ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+
+    cmdesc.FillMode = D3D11_FILL_SOLID;
+    cmdesc.CullMode = D3D11_CULL_BACK;
+
+    cmdesc.FrontCounterClockwise = true;
+    hr = _pd3dDevice->CreateRasterizerState(&cmdesc, &CCWcullMode);
+
+    cmdesc.FrontCounterClockwise = false;
+    hr = _pd3dDevice->CreateRasterizerState(&cmdesc, &CWcullMode);
 
 
     // Create the sample state
@@ -651,8 +694,12 @@ void Application::Cleanup()
     if (_pImmediateContext) _pImmediateContext->ClearState();
 
     if (_pConstantBuffer) _pConstantBuffer->Release();
+
     if (_pVertexBufferCube) _pVertexBufferCube->Release();
     if (_pIndexBufferCube) _pIndexBufferCube->Release();
+    if (_pVertexBufferPyramid) _pVertexBufferPyramid->Release();
+    if (_pIndexBufferPyramid) _pIndexBufferPyramid->Release();
+
     if (_pVertexLayout) _pVertexLayout->Release();
     if (_pVertexShader) _pVertexShader->Release();
     if (_pPixelShader) _pPixelShader->Release();
@@ -666,9 +713,26 @@ void Application::Cleanup()
 
     if (_wireFrame) _wireFrame->Release();
 
-    if (_pVertexBufferPyramid) _pVertexBufferPyramid->Release();
-    if (_pIndexBufferPyramid) _pIndexBufferPyramid->Release();
+    if (DSLessEqual) DSLessEqual->Release();
+    if (RSCullNone) RSCullNone->Release();
 
+    if (CCWcullMode) CCWcullMode->Release();
+    if (CWcullMode) CWcullMode->Release();
+
+    if (m_camera)
+    {
+        delete m_camera;
+        m_camera = nullptr;
+    }
+
+    for (auto gameObject : _gameObjects)
+    {
+        if (gameObject)
+        {
+            delete gameObject;
+            gameObject = nullptr;
+        }
+    }
 }
 
 
@@ -692,225 +756,148 @@ void Application::Update()
 
         t = (dwTimeCur - dwTimeStart) / 1000.0f;
     }
-    int vKey;
-    if (GetAsyncKeyState('w'))
-    {
-        m_camera->MoveForward();
-    }
-    if (GetAsyncKeyState('s'))
-    {
-        m_camera->MoveBackward();
-    }
 
-    if (GetAsyncKeyState('q'))
-    {
-        //moveBackward(3);
-    }
-    if (GetAsyncKeyState('4'))
-    {
-        //moveBackward(4);
-    }
-    //switch(GetAsyncKeyState(vKey))
-    //{
-    //    case('5'):
-    //    {
-    //        std::cout << "Incorrect key pressed" << endl;
-    //        break;
-    //    }
-    //    // Key A pressed
-    //    case('a'):
-    //    {
+    // Update camera
+    float angleAroundZ = XMConvertToRadians(_cameraOrbitAngleXZ);
 
-    //        break;
-    //    }
+    float x = _cameraOrbitRadius * cos(angleAroundZ);
+    float z = _cameraOrbitRadius * sin(angleAroundZ);
 
-    //    // Key D pressed
-    //    case('d'):
-    //    {
-    //        break;
-    //    }
+    XMFLOAT3 cameraPos = m_camera->GetPosition();
+    cameraPos.x = x;
+    cameraPos.z = z;
 
-    //    // Key W pressed
-    //    case('w'):
-    //    {
-    //        m_camera->MoveForward();
-    //        break;
-    //    }
-
-    //    // Key S pressed
-    //    case('s'):
-    //    {
-    //        m_camera->MoveBackward();
-    //        break;
-    //    }
-
-    //    // Key P pressed
-    //    case('p'):
-    //    {
-    //        _view = m_topDownCamera->GetViewMatrix();
-    //        _projection = m_topDownCamera->GetProjectionMatrix();
-    //        _wireFrameState = true;
-    //        break;
-    //    }
-
-    //    // Key O pressed
-    //    case('o'):
-    //    {
-    //        _view = m_camera->GetViewMatrix();
-    //        _projection = m_camera->GetProjectionMatrix();
-    //        _wireFrameState = false;
-    //        break;
-    //    }
-
-    //    // Key Q pressed
-    //    case('q'):
-    //    {
-    //        m_camera->MoveUp();
-    //        break;
-    //    }
-
-    //    //key E pressed
-    //    case('e'):
-    //    {
-    //        m_camera->MoveDown();
-    //        break;
-    //    }
-    //    default:
-    //    {
-    //        break;
-    //    }
-    //}
-
-    if (m_camera->Update())
-    {
-        _view = m_camera->GetViewMatrix();
-    }
+    m_camera->SetPosition(cameraPos);
+    m_camera->Update();
     
-    
+    //Update game objects
+    for (auto gameObject : _gameObjects)
+    {
+        gameObject->Update(t);
+    }
 
-    //
-    // Animate the cubes
-    //
-	XMStoreFloat4x4(&_world, XMMatrixRotationZ(t*0.5));
-
-    XMStoreFloat4x4(&_world2, XMMatrixRotationZ(t * 0.5) * XMMatrixTranslation(6.0f, 0.0f, 0.0f) * XMMatrixRotationZ(t));
-
-    XMStoreFloat4x4(&_world3, XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationZ(t * 0.5) * XMMatrixTranslation(6.0f, 0.0f, 0.0f) * XMMatrixRotationZ(t) * XMMatrixTranslation(3.0f, 0.0f, 0.0f));
-    
 }
 
 
 void Application::Draw()
 {
-    //
-    // Clear the back buffer
-    //
-    float ClearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f}; // red,green,blue,alpha
-    _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, ClearColor);
 
-    //
+    // Clear the back buffer
+    float ClearColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f }; // red,green,blue,alpha
+    _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, ClearColor);
     // Apply the depth/stencil buffer
-    //
     _pImmediateContext->ClearDepthStencilView(_depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-
-    // Make evrything wireframe by having the state set to wireframe before anything is drawn
-    // Use a bool to try change the state to the wireframes, errors inut side, research needed for console inputs
-    // Make a keynord class to handle events properly, and add this funtionallity in the object class
-    if (_wireFrameState) {
-        _pImmediateContext->RSSetState(_wireFrame);
-    }
-    else {
-        _pImmediateContext->RSSetState(nullptr);
-    }
-
     //
-    // Create the texture for the cube
+    // Setup buffers and render scene
     //
-    //_cubeTex
 
-	XMMATRIX world = XMLoadFloat4x4(&_world);
-	XMMATRIX view = XMLoadFloat4x4(&_view);
-	XMMATRIX projection = XMLoadFloat4x4(&_projection);
-    
-    // Better to have object store these in personal members as material will change from object to object
-    // Hard coded values for now
-    // Light direction from surface loaded in to struct (XYZ)
-    m_dirLight.Direction = XMFLOAT3(0.0f, 0.5f, -1.0f);
-    // Diffuse Light colour (RGBA)
-    m_dirLight.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    // Ambient light colour (RGBA)
-    m_dirLight.Ambient = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    // Specular light colour(RGBA)
-    m_dirLight.Specular = XMFLOAT4(0.2f, 0.0f, 0.8f, 1.0f);
+    _pImmediateContext->IASetInputLayout(_pVertexLayout);
 
-    // Diffuse material properties (RGBA)
-    diffuseMaterial = XMFLOAT4(0.8f, 0.5f, 0.5f, 1.0f);
-    // Ambient material properties (RGBA)
-    ambientMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-    // Specular material properties (RGBA)
-    specularMaterial = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+    _pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
+    _pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
 
-    // Specular power (float)
-    specularPower = 5.0f;
-    // Eye pos
-    eyePos = m_camera->GetEye();
+    _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+    _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
+    _pImmediateContext->PSSetSamplers(0, 1, &_pSamplerLinear);
 
-    //
-    // Update variables
-    //
-    // Directional light
     ConstantBuffer cb;
-	cb.mWorld = XMMatrixTranspose(world);
-	cb.mView = XMMatrixTranspose(view);
-	cb.mProjection = XMMatrixTranspose(projection);
-    cb.DiffuseMtrl = diffuseMaterial;
-    cb.AmbientMtrl = ambientMaterial;
-    cb.SpecularMtrl = specularMaterial;
+
+    XMFLOAT4X4 viewAsFloats = m_camera->GetView();
+    XMFLOAT4X4 projectionAsFloats = m_camera->GetProjection();
+
+    XMMATRIX view = XMLoadFloat4x4(&viewAsFloats);
+    XMMATRIX projection = XMLoadFloat4x4(&projectionAsFloats);
+
+    cb.mView = XMMatrixTranspose(view);
+    cb.mProjection = XMMatrixTranspose(projection);
 
     cb.gDirLight = m_dirLight;
-    cb.gPointLight = m_pointLight;
-    cb.gSpotLight = m_spotLight;
-    //cb.SpecularPower = specularPower;
-    cb.EyePosW = eyePos;
-    cb.gTime = gtime;
-
-    // Set Index and Vertex buffers in draw function
-    UINT stride = sizeof(SimpleVertex);
-    UINT offset = 0;
-    // Set vertex buffer for first object
-    _pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBufferCube, &stride, &offset);
-    // Set index buffer for first object
-    _pImmediateContext->IASetIndexBuffer(_pIndexBufferCube, DXGI_FORMAT_R16_UINT, 0);
-
-    // Set constant buffer
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    
-    // Draws the first object
-	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
-    _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
-    _pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
-	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-	_pImmediateContext->DrawIndexed(CubeIndCount, 0, 0);
-
-    // Draw the second object
-    world = XMLoadFloat4x4(&_world2);
-    cb.mWorld = XMMatrixTranspose(world);
-    _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-    _pImmediateContext->DrawIndexed(CubeIndCount, 0, 0);
+    cb.EyePosW = m_camera->GetPosition();
 
 
-    // Change the vetex and index buffers to the pyramid mesh
-    //_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBufferPyramid, &stride, &offset);
-    //_pImmediateContext->IASetIndexBuffer(_pIndexBufferPyramid, DXGI_FORMAT_R16_UINT, 0);
+    for (auto gameObject : _gameObjects)
+    {
+        // Get render material
+        Material material = gameObject->GetAppearance()->GetMaterial();
 
-    // Draw third object
-    world = XMLoadFloat4x4(&_world3);
-    cb.mWorld = XMMatrixTranspose(world);
-    _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+        // Copy material to shader
+        cb.gSurface.AmbientMtrl = material.ambient;
+        cb.gSurface.DiffuseMtrl = material.diffuse;
+        cb.gSurface.SpecularMtrl = material.specular;
 
-    _pImmediateContext->DrawIndexed(CubeIndCount, 0, 0);
-    //_pImmediateContext->DrawIndexed(PyramidIndCount, 0, 0);
+        // Set world matrix
+        cb.mWorld = XMMatrixTranspose(gameObject->GetTransform()->GetWorldMatrix());
+
+        // Set texture
+        if (gameObject->GetAppearance()->HasTexture())
+        {
+            ID3D11ShaderResourceView* textureRV = gameObject->GetAppearance()->GetTextureRV();
+            _pImmediateContext->PSSetShaderResources(0, 1, &textureRV);
+            cb.HasTexture = 1.0f;
+        }
+        else
+        {
+            cb.HasTexture = 0.0f;
+        }
+
+        // Update constant buffer
+        _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+        // Draw object
+        gameObject->Draw(_pImmediateContext);
+    }
+
+	//cb.mWorld = XMMatrixTranspose(world);
+	//cb.mView = XMMatrixTranspose(view);
+	//cb.mProjection = XMMatrixTranspose(projection);
+ //   cb.gSurface.DiffuseMtrl = diffuseMaterial;
+ //   cb.gSurface.AmbientMtrl = ambientMaterial;
+ //   cb.gSurface.SpecularMtrl = specularMaterial;
+
+ //   cb.gDirLight = m_dirLight;
+ //   cb.gPointLight = m_pointLight;
+ //   cb.gSpotLight = m_spotLight;
+ //   //cb.SpecularPower = specularPower;
+ //   cb.EyePosW = eyePos;
+ //   cb.gTime = gtime;
+
+ //   // Set Index and Vertex buffers in draw function
+ //   UINT stride = sizeof(SimpleVertex);
+ //   UINT offset = 0;
+ //   // Set vertex buffer for first object
+ //   _pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBufferCube, &stride, &offset);
+ //   // Set index buffer for first object
+ //   _pImmediateContext->IASetIndexBuffer(_pIndexBufferCube, DXGI_FORMAT_R16_UINT, 0);
+
+ //   // Set constant buffer
+	//_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+ //   
+ //   // Draws the first object
+	//_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+ //   _pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
+ //   _pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
+	//_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
+	//_pImmediateContext->DrawIndexed(CubeIndCount, 0, 0);
+
+ //   // Draw the second object
+ //   world = XMLoadFloat4x4(&_world2);
+ //   cb.mWorld = XMMatrixTranspose(world);
+ //   _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+ //   _pImmediateContext->DrawIndexed(CubeIndCount, 0, 0);
+
+
+ //   // Change the vetex and index buffers to the pyramid mesh
+ //   //_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBufferPyramid, &stride, &offset);
+ //   //_pImmediateContext->IASetIndexBuffer(_pIndexBufferPyramid, DXGI_FORMAT_R16_UINT, 0);
+
+ //   // Draw third object
+ //   world = XMLoadFloat4x4(&_world3);
+ //   cb.mWorld = XMMatrixTranspose(world);
+ //   _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+ //   _pImmediateContext->DrawIndexed(CubeIndCount, 0, 0);
+ //   //_pImmediateContext->DrawIndexed(PyramidIndCount, 0, 0);
 
 
     //

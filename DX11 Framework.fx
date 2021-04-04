@@ -13,14 +13,22 @@ SamplerState samLinear : register(s0);
 //--------------------------------------------------------------------------------------
 // Lighting structures, They are mirrorerd in structures.h
 //--------------------------------------------------------------------------------------
+struct SurfaceInfo
+{
+    float4 AmbientMtrl;
+    float4 DiffuseMtrl;
+    float4 SpecularMtrl;
+};
+
+
 struct DirectionalLight
 {
-    float4 Ambient;
-    float4 Diffuse;
-    float4 Specular;
+    float4 AmbientLight;
+    float4 DiffuseLight;
+    float4 SpecularLight;
+    
+    float SpecularPower;
     float3 Direction;
-    float pad; // Pad the last float so we can set an
-	// array of lights if we wanted.
 };
 
 struct PointLight
@@ -54,6 +62,7 @@ struct SpotLight
     float3 Att;
     float Pad; // Pad the last float so we can set an
 	// array of lights if we wanted.
+    
 };
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
@@ -63,27 +72,28 @@ cbuffer ConstantBuffer : register(b0)
 	matrix World;	//4
 	matrix View;		//4
 	matrix Projection;		//4
-	float4 DiffuseMtrl;		//4
-    float4 AmbientMtrl; //4
-    float4 SpecularMtrl; //4
+    
+    SurfaceInfo surface;
     DirectionalLight gDirLight;
 	PointLight gPointLight;
 	SpotLight gSpotLight;
-	float3 EyePosW;		//4
-	float gTime;		//4
+    
+	float3 EyePosW;		//3
+    float HasTexture; //1
 }
 
 struct VS_INPUT
 {
-    float3 Pos : POSITION;
+    float4 Pos : POSITION;
     float3 Norm : NORMAL;
     float2 Tex : TEXCOORD0;
 };
 
-struct VS_OUT
+struct VS_OUTPUT
 {
 	float4 PosH : SV_POSITION;
 	float3 PosW : POSTION;
+    
 	float3 Norm : NORMAL;
 	float2 Tex : TEXCOORD;
 };
@@ -92,69 +102,79 @@ struct VS_OUT
 //--------------------------------------------------------------------------------------
 // Vertex Shader output
 //--------------------------------------------------------------------------------------
-VS_OUT VS(VS_INPUT vin)
+VS_OUTPUT VS(VS_INPUT vin)
 {
-	VS_OUT vout = (VS_OUT)0;
+    VS_OUTPUT output = (VS_OUTPUT) 0;
 
-    // Transform to world space.
-	vout.PosH = mul(float4(vin.Pos, 1), World);
-    vout.PosW = vout.PosH.xyz;
-    
-	vout.PosH = mul(vout.PosH, View);
-    vout.PosH = mul(vout.PosH, Projection);
+    float4 posW = mul(vin.Pos, World);
+    output.PosW = posW.xyz;
 
-    // Convert from local space to world space 
-    // W component of vector is 0 as vectors cannot be translated
-	vout.Norm = mul(float4(vin.Norm, 0.0f), World).xyz;
-	vout.Norm = normalize(vout.Norm);
-    
-	vout.Tex = vin.Tex;
+    output.PosH = mul(posW, View);
+    output.PosH = mul(output.PosH, Projection);
+    output.Tex = vin.Tex;
 
-	return vout;
+    float3 normalW = mul(float4(vin.Norm, 0.0f), World).xyz;
+    output.Norm = normalize(normalW);
+
+    return output;
 }
 
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS(VS_OUT pin) : SV_Target
+float4 PS(VS_OUTPUT pin) : SV_Target
 {
-    //Interpolating normal can unnormalize it
-	pin.Norm = normalize(pin.Norm);
-    
-    // The toEye vector is used in lighting
-	float3 toEye = normalize(EyePosW - pin.PosW);
-    
-    //Default to multiplicative identity
-	float4 texColor = float4(1, 1, 1, 1);
-    
-    //Sample texture
-	texColor = txDiffuse.Sample(samLinear, pin.Tex);
-    
-    //
-    // Lighting
-    //
+    float3 normalW = normalize(pin.Norm);
 
-    //Compute the reflection vector.
-	float3 r = reflect(-gDirLight.Direction, pin.Norm);
-    
-    //Determine how much (if any) specular light makes it in to the eye
-    float specularAmount = pow(max(dot(r, toEye), 0.0f), 5);
+    float3 toEye = normalize(EyePosW - pin.PosW);
 
-    //Calculate diffuse and ambient lighting
-    float diffuseAmount = max(dot(gDirLight.Direction, pin.Norm), 0.5f);
-    float3 diffuse = diffuseAmount * (DiffuseMtrl * gDirLight.Diffuse).rgb;
-    float3 ambient = AmbientMtrl * gDirLight.Ambient;
+	// Get texture data from file
+    float4 textureColour = txDiffuse.Sample(samLinear, pin.Tex);
 
-    //Compute the ambient, diffuse and specular terms seperately
-    float3 specular = specularAmount * (SpecularMtrl * gDirLight.Specular).rgb;
+    float3 ambient = float3(0.0f, 0.0f, 0.0f);
+    float3 diffuse = float3(0.0f, 0.0f, 0.0f);
+    float3 specular = float3(0.0f, 0.0f, 0.0f);
 
-	float4 litColor;
-    //Sum all the terms together and copy over the diffuse alpha
-    litColor.rgb = texColor.rgb * ((diffuse + ambient) + specular);
-    litColor.a = DiffuseMtrl.a * texColor.a;
+    float3 lightLecNorm = normalize(gDirLight.Direction);
+	// Compute Colour
 
-	return litColor;
+	// Compute the reflection vector.
+    float3 r = reflect(-lightLecNorm, normalW);
+
+	// Determine how much specular light makes it into the eye.
+    float specularAmount = pow(max(dot(r, toEye), 0.0f), gDirLight.SpecularPower);
+
+	// Determine the diffuse light intensity that strikes the vertex.
+    float diffuseAmount = max(dot(lightLecNorm, normalW), 0.0f);
+
+	// Only display specular when there is diffuse
+    if (diffuseAmount <= 0.0f)
+    {
+        specularAmount = 0.0f;
+    }
+
+	// Compute the ambient, diffuse, and specular terms separately.
+    specular += specularAmount * (surface.SpecularMtrl * gDirLight.SpecularLight).rgb;
+    diffuse += diffuseAmount * (surface.DiffuseMtrl * gDirLight.DiffuseLight).rgb;
+    ambient += (surface.AmbientMtrl * gDirLight.AmbientLight).rgb;
+
+	// Sum all the terms together and copy over the diffuse alpha.
+    float4 finalColour;
+
+    if (HasTexture == 1.0f)
+    {
+        finalColour.rgb = (textureColour.rgb * (ambient + diffuse)) + specular;
+        //finalColour.rgb = specular;
+    }
+    else
+    {
+        finalColour.rgb = ambient + diffuse + specular;
+    }
+
+    finalColour.a = surface.DiffuseMtrl.a;
+
+    return finalColour;
 }
 
 
